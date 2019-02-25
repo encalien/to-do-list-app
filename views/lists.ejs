@@ -1,0 +1,38 @@
+<%- include("header") %>
+	<div class="box" id="heading">
+		<h1>YOUR LISTS</h1>
+	</div>
+
+<!-- Create new list -->
+	<div class="box">
+		<div class="item">
+			<form action="/lists" method="POST">
+				<input type="text" name="newList" placeholder="new list" autocomplete="off" autofocus="true">
+				<button class="btn add" type="submit">+</button>
+			</form>
+		</div>
+	</div>
+
+<!-- Display existing lists -->
+	<h4>YOUR LISTS</h4>
+	<div class="box scroll-box">
+		<% lists.forEach(function(list) { %>
+		<div class="item">
+			<div class="wider-form">
+				<p id="lists-list"><a href="/lists/<%= list.title %>"><%= list.title.toUpperCase(); %></a></p>
+			</div>
+			<form class="smaller-form" action="/lists/:listTitle?_method=DELETE" method="POST">
+				<input type="hidden" name="listTitle" value="<%= list.title %>">
+				<button class="btn delete" type="submit">-</button>
+			</form>
+		</div>
+		
+		<% }); %>
+	</div>
+
+	
+
+	<div class="day-display position-bottom-left">
+	  <h2>Today is <%= today %></h2>
+  </div>
+<%- include("footer") %>

@@ -1,0 +1,38 @@
+<div class="box scroll-box">
+
+	<% if (list.tasks.filter(task => task.completed == completed).length > 4) { %>
+		<div class="item">
+			<p class="help">Scroll down to see more tasks!</p>
+		</div>
+	<% } else if (list.tasks.filter(task => task.completed == completed).length == 0) { %>
+		<div class="item">
+			<% if (!completed) { %>
+				<p class="help">Well done!<br>You have no pending tasks.</p>
+			<% } else { %>
+				<p class="help">Come on, complete your first task!</p>
+			<% } %>
+		</div>
+	<% } %>
+
+	<% list.tasks.forEach(function(task) { %>
+
+		<% if (task.completed == completed) { %>
+			<div class="item">
+
+				<form class="wider-form" action="/toggleCompleted" method="POST">
+					<input type="hidden" name="completedTaskId" value="<%= task._id %>">
+					<input type="checkbox" <% if (task.completed) { %> checked <% } %> name="completed" onChange="this.form.submit()">
+					<p><%= task.taskName %></p>
+				</form>
+
+				<form class="smaller-form" action="/lists/:listTitle/tasks/:taskId?_method=DELETE" method="POST">
+					<input type="hidden" name="listTitle" value="<%= list.title %>">
+					<input type="hidden" name="deletedTaskId" value="<%= task._id %>">
+					<button class="btn delete" type="submit">-</button>
+				</form>
+
+			</div>
+		<% } %>
+
+	<% }); %>
+</div>

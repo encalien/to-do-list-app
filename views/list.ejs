@@ -1,0 +1,55 @@
+<%- include("header") %>
+
+<div class="header">
+	<a href="/lists"><button type="button" class="btn navigation position-top-left">
+		<img src="/arrow-left.png"> ALL LISTS</button></a>
+	<div class="box" id="heading">
+		<h1><%= list.title.toUpperCase(); %></h1>
+	</div>
+</div>
+
+<!-- Create new task form -->
+<div class="box">
+	<div class="item">
+		<form action="/lists/:listTitle/tasks" method="POST">
+			<input type="text" name="newItem" placeholder="new task" autocomplete="off" autofocus="true">
+			<button class="btn add" type="submit" name="list" value="<%= list.title %>">+</button>
+		</form>
+	</div>
+</div>
+
+<!-- List all complete tasks -->
+<div class="task-list-wrapper">
+	<% if (showCompleted) { %>
+			<div class="left">
+				<h4>PENDING TASKS</h4>
+				<%- include("task-list", {completed: false}) %>
+			</div>
+			<div class="right">
+				<h4>COMPLETED TASKS</h4>
+				<%- include("task-list", {completed: true}) %>
+			</div>
+	<% } else { %>
+
+	<!-- List all incomplete tasks -->
+		<h4>PENDING TASKS</h4>
+		<%- include("task-list", {completed: false}) %>
+	<% } %>
+</div>
+
+<!-- Toggle show completed -->
+<div>
+	<form action="/toggleShowCompleted" method="POST">
+		<% if (showCompleted) { %>
+			<button class="btn navigation center" type="submit" name="desiredStatus" value="false">HIDE COMPLETED</button>	
+		<% } else { %>
+			<button class="btn navigation center" type="submit" name="desiredStatus" value="true">SHOW COMPLETED</button>
+		<% } %>
+	</form>
+</div>
+
+<div class="day-display position-bottom-left">
+	<h2>Today is <%= today %></h2>
+</div>
+
+<%- include("footer") %>
