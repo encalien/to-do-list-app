@@ -88,6 +88,7 @@ img {
   margin-top: -4px;
 }
 
+
 .left {
   margin-left: 10%;
   width: 40%;
@@ -111,6 +112,14 @@ img {
 .scroll-box {
   max-height: 227px;
   overflow-y: scroll;
+}
+
+#login {
+  height: 200px;
+  background: #A683E3;
+  margin: 120px auto 0;
+  text-align: center;
+  line-height: 180px;
 }
 
 .task-list-wrapper {
@@ -194,6 +203,12 @@ img {
   position: absolute;
   top: 20px;
   left: 20px;
+}
+
+.position-top-right {
+  position: absolute;
+  top: 20px;
+  right: 20px;
 }
 
 .position-bottom-left {
