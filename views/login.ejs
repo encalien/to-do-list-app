@@ -1,7 +1,7 @@
 <%- include("header") %>
 
 <div class="box" id="login">
-	<span><h1>SIGN UP or LOG IN</h1></span>
+	<span><h1><%= route.toUpperCase() %></h1></span>
 </div>
 
 <div class="box">
@@ -13,5 +13,19 @@
 		<a class="" href="/auth/facebook" role="button">FACEBOOK</a>
 	</div>
 </div>
+
+<form action="/<%= route %>" method="POST">
+    <div>
+        <label>Email:</label>
+        <input type="text" name="email"/>
+    </div>
+    <div>
+        <label>Password:</label>
+        <input type="password" name="password"/>
+    </div>
+    <div>
+        <input type="submit" value="<%= route.toUpperCase() %>"/>
+    </div>
+</form>
 
 <%- include("footer") %>

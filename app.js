@@ -10,6 +10,8 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const session = require('express-session');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 const app = express();
 
@@ -17,6 +19,18 @@ app.use(express.static('public'));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
+
+// SET UP SESSION
+
+app.use(session({
+  secret: 'Flying purple people eater',
+  resave: false,
+  saveUninitialized: false,
+}))
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 // SET UP DATABASE
 
@@ -52,6 +66,8 @@ const List = mongoose.model('List', listSchema);
 const userSchema = new mongoose.Schema({
   googleId: String,
   facebookId: String,
+  email: String,
+  password: String,
 	lists: [{
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'List'
@@ -115,18 +131,6 @@ passport.deserializeUser(function(id, done) {
     done(err, user);
   });
 });
-
-app.use(passport.initialize());
-
-// SET UP SESSION
-
-app.use(session({
-  secret: 'Flying purple people eater',
-  resave: false,
-  saveUninitialized: false,
-}))
-
-app.use(passport.session());
 
 
 
@@ -231,7 +235,68 @@ function deleteListAndListTasks(listTitle) {
 	});
 }
 
-// ROUTES
+function findAndAuthenticateUser(email, password, req, response) {
+	User.findOne({email: email}, function(err, user) {
+		if (err) {
+			console.log(err);
+			response.redirect('/login');
+		} else {
+			if (user) {
+				bcrypt.compare(password, user.password, function(err, res) {
+					if (res) {
+						req.login(user, function(err) {
+						  if (err) { return next(err); }
+						  	console.log(req.user);
+							  return response.redirect('/lists');
+							});
+					} else {
+						response.redirect('/login');
+					}
+				});
+			} else {
+				console.log("no such user");
+				response.redirect('/register');
+			}
+		}
+	})
+}
+
+function createUser(email, password, req, response) {
+	User.findOne({email: email}, function(err, user) {
+		if (user) {
+			console.log("user already exists");
+			response.redirect('/login');
+		} else {
+			bcrypt.hash(password, saltRounds, function(err, hash) {
+			  if (err) {
+					console.log(err);
+					response.redirect('/register');
+				} else {
+					// return bindings.encrypt(data, salt, cb);
+					User.create({email: email, password: hash}, function(err, user) {
+						if (err) {
+							console.log(err);
+							response.redirect('/register');
+						} else {
+							console.log('created user: ' + user);
+							req.login(user, function(err) {
+						  	if (err) { 
+						  		return next(err); 
+						  		response.redirect('/login');
+						  	}
+						  	console.log(req.user);
+							  return response.redirect('/lists');
+							});
+						}
+					})
+				}
+			});
+		}
+	});
+}
+
+
+// DEFINE ROUTES
 
 app.get('/', function(req, res) {
 	res.redirect('/login');
@@ -239,19 +304,23 @@ app.get('/', function(req, res) {
 
 app.route('/lists')
 	.get(function(req, res) {
-		if (req.isAuthenticated){
-			List.find(function(err, foundLists) {
+		if (req.isAuthenticated()) {
+			User.findOne({_id: req.user._id}).populate('lists').exec(function(err, user) {
 				if (err) {
 					console.log(err);
 				} else {
-					res.render('lists', {lists: foundLists, today: today});
+					if (user) {
+						res.render('lists', {lists: user.lists, today: today});
+					} else {
+						console.log('user not found');
+						res.redirect('/login');
+					}
 				}
 			})
 		} else {
-			console.log("no logged in user");
+			console.log('not authenticated');
 			res.redirect('/login');
 		}
-		
 	})
 	.post(function(req, res) {
 		const newList = _.lowerCase(req.body.newList.toLowerCase());
@@ -264,12 +333,12 @@ app.route('/lists')
 app.route('/lists/:listTitle')
 	.get(function (req, res) {
 		listTitle = _.lowerCase(req.params.listTitle);
-		List.findOne({title: listTitle}).populate('tasks').exec(function(err, foundList) {
+		List.findOne({title: listTitle}).populate('tasks').exec(function(err, list) {
 			if (err) {
 				console.log(err);
 			} else {
-				if (foundList) {
-					res.render('list', {today: today, list: foundList, showCompleted: showCompleted});
+				if (list) {
+					res.render('list', {today: today, list: list, showCompleted: showCompleted});
 				} else {
 					res.redirect('/lists');
 				}
@@ -280,7 +349,7 @@ app.route('/lists/:listTitle')
 		let listTitle = req.body.listTitle;
 		deleteListAndListTasks(listTitle);
 
-		res.redirect('/lists/'+listTitle);
+		res.redirect('/lists' + listTitle);
 	})
 	
 app.route('/lists/:listTitle/tasks')
@@ -289,23 +358,36 @@ app.route('/lists/:listTitle/tasks')
 		const newTask = createNewTask(taskName);
 		pushToList(newTask, listTitle);
 
-		res.redirect('/lists/'+listTitle);
+		res.redirect('/lists' + listTitle);
 	});
 
 app.route('/lists/:listTitle/tasks/:taskId')
 	.delete(function(req, res) {
-		let taskId = req.body.deletedTaskId;
+		const taskId = req.body.deletedTaskId;
 		deleteTaskAndRemoveFromList(taskId, listTitle);
 
-		res.redirect('/lists/'+listTitle);
+		res.redirect('/lists' + listTitle);
 	});
 
-app.get('/login', function(req, res) {
-		res.render('login');
+app.route('/login')
+	.get(function(req, res) {
+		res.render('login', {route: 'login'});
 	})
+	.post(function(req, res) {
+		findAndAuthenticateUser(req.body.email, req.body.password, req, res);
+	});
+
+app.route('/register')
+	.get(function(req, res) {
+		res.render('login', {route: 'register'});
+	})
+	.post(function(req, res) {
+		createUser(req.body.email, req.body.password, req, res);
+	});
 
 app.get('/auth/google',
-	passport.authenticate('google', { scope: ['profile'] }));
+	passport.authenticate('google', { scope: ['profile'] }), function(req, res) {
+	});
 
 app.get('/auth/google/callback', 
   passport.authenticate('google', { failureRedirect: '/login' }),
@@ -327,19 +409,24 @@ app.get('/logout', function(req, res){
   res.redirect('/login');
 });
 
+app.get('/session', function(req, res){
+	console.log(req.session);
+	console.log(req.user);
+  res.send('req.session.id = ' + req.session.id);
+});
 
 
 app.post('/toggleCompleted', function(req, res) {
 	let taskId = req.body.completedTaskId;
 	toggleCompleted(taskId);
 
-	res.redirect('/lists/'+listTitle);
+	res.redirect('/lists/' + listTitle);
 })
 
 app.post('/toggleShowCompleted', function(req, res) {
 	showCompleted = JSON.parse(req.body.desiredStatus);
 
-	res.redirect('/lists/'+listTitle);
+	res.redirect('/' + currentUser + '/lists' + listTitle);
 })
 
 // START SERVER 
