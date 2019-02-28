@@ -81,7 +81,8 @@ const User = mongoose.model('User', userSchema);
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: 'http://localhost:3000/auth/google/callback',
+    // callbackURL: 'http://localhost:3000/auth/google/callback',
+    callbackURL: 'https://encalien-to-do-list-app.herokuapp.com/auth/google/callback',
     userProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo'
   }, 
   function(accessToken, refreshToken, profile, cb) {
@@ -104,7 +105,8 @@ passport.use(new GoogleStrategy({
 passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
-    callbackURL: 'http://localhost:3000/auth/facebook/callback',
+    // callbackURL: 'http://localhost:3000/auth/facebook/callback',
+    callbackURL: 'https://encalien-to-do-list-app.herokuapp.com/auth/facebook/callback',
   },
   function(accessToken, refreshToken, profile, cb) {
     User.findOne({ facebookId: profile.id }, function (err, user) {
@@ -170,7 +172,7 @@ function createUser(email, password, req, response) {
 	});
 };
 
-function findAndAuthenticateUser(email, password, req, response) {
+function findAndAuthenticateUser(email, password, req, response, next) {
 	User.findOne({email: email}, function(err, user) {
 		if (err) {
 			console.log(err);
@@ -180,16 +182,19 @@ function findAndAuthenticateUser(email, password, req, response) {
 				bcrypt.compare(password, user.password, function(err, res) {
 					if (res) {
 						req.login(user, function(err) {
-						  if (err) { return next(err); }
-							  return response.redirect('/lists');
-							});
+						  if (err) {
+						  	console.log(err);
+						  } else {
+							  response.redirect('/lists');
+						  }
+						});
 					} else {
 						response.redirect('/login');
 					}
 				});
 			} else {
 				console.log("no such user");
-				response.redirect('/register');
+				next();
 			}
 		}
 	})
@@ -425,15 +430,9 @@ app.route('/login')
 		res.render('login', {route: 'login'});
 	})
 	.post(function(req, res) {
-		findAndAuthenticateUser(req.body.email, req.body.password, req, res);
-	});
-
-app.route('/register')
-	.get(function(req, res) {
-		res.render('login', {route: 'register'});
-	})
-	.post(function(req, res) {
-		createUser(req.body.email, req.body.password, req, res);
+		findAndAuthenticateUser(req.body.email, req.body.password, req, res, function() {
+			createUser(req.body.email, req.body.password, req, res);
+		});
 	});
 
 app.get('/auth/google',
@@ -464,8 +463,9 @@ app.get('/logout', function(req, res) {
 
 let port = process.env.PORT;
 if (port == null || port == "") {
-	port = 3000
+  port = 3000;
 }
+
 app.listen(port, function() {
 	console.log('Server running');
 });
