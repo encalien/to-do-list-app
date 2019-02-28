@@ -19,8 +19,9 @@
 		<% if (task.completed == completed) { %>
 			<div class="item">
 
-				<form class="wider-form" action="/toggleCompleted" method="POST">
+				<form class="wider-form" action="/lists/:listTitle/tasks/:taskId?_method=PATCH" method="POST">
 					<input type="hidden" name="completedTaskId" value="<%= task._id %>">
+					<input type="hidden" name="listTitle" value="<%= list.title %>">
 					<input type="checkbox" <% if (task.completed) { %> checked <% } %> name="completed" onChange="this.form.submit()">
 					<p><%= task.taskName %></p>
 				</form>

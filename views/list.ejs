@@ -25,29 +25,29 @@
 	<% if (showCompleted) { %>
 			<div class="left">
 				<h4>PENDING TASKS</h4>
-				<%- include("task-list", {completed: false}) %>
+				<%- include("tasks", {completed: false}) %>
 			</div>
 			<div class="right">
 				<h4>COMPLETED TASKS</h4>
-				<%- include("task-list", {completed: true}) %>
+				<%- include("tasks", {completed: true}) %>
 			</div>
 	<% } else { %>
 
 	<!-- List all incomplete tasks -->
 		<h4>PENDING TASKS</h4>
-		<%- include("task-list", {completed: false}) %>
+		<%- include("tasks", {completed: false}) %>
 	<% } %>
 </div>
 
 <!-- Toggle show completed -->
 <div>
-	<form action="/toggleShowCompleted" method="POST">
+	<a href="/lists/<%= list.title%>?showCompleted=<%= !showCompleted %>">
 		<% if (showCompleted) { %>
-			<button class="btn navigation center" type="submit" name="desiredStatus" value="false">HIDE COMPLETED</button>	
+			<button class="btn navigation center">HIDE COMPLETED</button>
 		<% } else { %>
-			<button class="btn navigation center" type="submit" name="desiredStatus" value="true">SHOW COMPLETED</button>
+			<button class="btn navigation center">SHOW COMPLETED</button>
 		<% } %>
-	</form>
+	</a>
 </div>
 
 <div class="day-display position-bottom-left">

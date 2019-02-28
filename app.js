@@ -132,13 +132,9 @@ passport.deserializeUser(function(id, done) {
   });
 });
 
-
-
-
 let showCompleted = false;
 const today = date.getDate();
 let day;
-
 
 function createUser(email, password, req, response) {
 	User.findOne({email: email}, function(err, user) {
@@ -237,8 +233,8 @@ function createNewListForUser(listTitle, userId) {
 	});
 };
 
-function deleteListAndListTasks(listTitle) {
-	List.findOne({title: listTitle}, function(err, foundList) {
+function deleteListAndListTasks(listId) {
+	List.findOne({_id: listId}, function(err, foundList) {
 		if (err) {
 			console.log(err);
 		} else {
@@ -252,7 +248,7 @@ function deleteListAndListTasks(listTitle) {
 		}
 	})
 
-	List.findOneAndRemove({title: listTitle}, function(err) {
+	List.findOneAndRemove({_id: listId}, function(err) {
 		if (err) {
 			console.log(err);
 	  } else {
@@ -344,6 +340,9 @@ app.route('/lists')
 app.route('/lists/:listTitle')
 	.get(function (req, res) {
 		const listTitle = _.lowerCase(req.params.listTitle);
+		if (req.query.showCompleted) {
+			showCompleted = JSON.parse(req.query.showCompleted);
+		}
 		requireAuthentication(req, res, function() {
 			findUsersListByTitle(listTitle, req.user._id, function() {
 				if (list) {
@@ -362,11 +361,18 @@ app.route('/lists/:listTitle')
 		});
 	})
 	.delete(function(req, res) {
-		const listTitle = req.body.listTitle;
+		const listTitle = req.body.listTitle; // home
 		requireAuthentication(req, res, function() {
 			findUsersListByTitle(listTitle, req.user._id, function() {
 				if (list) {
-					deleteListAndListTasks(listTitle);
+					deleteListAndListTasks(list._id);
+					User.findOneAndUpdate({_id: req.user._id}, { $pull: {lists: list._id} }, function(err, foundUser) {
+						if (err) {
+							console.log(err);
+					  } else {
+							console.log('Successfully removed list from user');
+						}
+					});
 				} else {
 					console.log('This user does not have a list with this title')
 				}
@@ -392,6 +398,12 @@ app.route('/lists/:listTitle/tasks')
 	});
 
 app.route('/lists/:listTitle/tasks/:taskId')
+	.patch(function(req, res) {
+		const taskId = req.body.completedTaskId;
+		const listTitle = req.body.listTitle;
+		toggleCompleted(taskId);
+		res.redirect('/lists/' + listTitle);
+	})
 	.delete(function(req, res) {
 		const listTitle = req.body.listTitle;
 		const taskId = req.body.deletedTaskId;
@@ -446,26 +458,6 @@ app.get('/logout', function(req, res) {
   req.logout();
   res.redirect('/login');
 });
-
-app.get('/session', function(req, res) {
-	console.log(req.session);
-	console.log(req.user);
-  res.send('req.session.id = ' + req.session.id);
-});
-
-
-app.post('/toggleCompleted', function(req, res) {
-	let taskId = req.body.completedTaskId;
-	toggleCompleted(taskId);
-
-	res.redirect('/lists/' + listTitle);
-})
-
-app.post('/toggleShowCompleted', function(req, res) {
-	showCompleted = JSON.parse(req.body.desiredStatus);
-
-	res.redirect('/lists/' + listTitle);
-})
 
 // START SERVER 
 
