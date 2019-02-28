@@ -134,132 +134,11 @@ passport.deserializeUser(function(id, done) {
 
 
 
-let listTitle = '';
+
 let showCompleted = false;
 const today = date.getDate();
 let day;
 
-function createNewList(listTitle) {
-	List.findOne({title: listTitle}, function(err, foundList) {
-		if (err) {
-			console.log(err);
-		} else {
-			if (foundList) {
-				console.log('List with this title already exists!');
-			} else {
-				List.create({ title: listTitle }, function (err, createdList) {
-				  if (err) {
-						console.log(err);
-				  } else {
-				  	console.log('Successfully saved list ' + listTitle + ' to collection Lists.');
-					}
-				});
-			}
-		}		
-	})
-};
-
-function createNewTask(name) {
-	const newTask = new Task ({ taskName: name })
-	newTask.save(function (err) {
-		if (err) {
-			console.log(err);
-	  } else {
-	  	console.log('Successfully saved task ' + name + ' to collection Tasks.');
-		}
-	});
-	return newTask;
-};
-
-function pushToList(task, listTitle) {
-	List.findOneAndUpdate({ title: listTitle }, { $push: { tasks: task } }, function(err, updatedList) {
-		if (err) {
-			console.log(err);
-	  } else {
-	  	console.log('successfully saved task: ' + task + ' to list: ' + listTitle);
-		}
-	});
-}
-
-function toggleCompleted(taskId){
-	Task.findOne({_id: taskId}, function(err, foundTask) {
-		if (err) {
-			console.log(err);
-	  } else {
-	  	foundTask.completed = !foundTask.completed;
-			foundTask.save();
-	  	console.log('successfully toggled completed status to: ' + foundTask.completed);
-		}
-	});
-}
-
-function deleteTaskAndRemoveFromList(taskId, listTitle){
-	Task.findOneAndRemove({_id: taskId}, function(err) {
-		if (err) {
-			console.log(err);
-		} else {
-			console.log('Successfully deleted task');
-		}
-	});
-
-	List.findOneAndUpdate({title: listTitle}, { $pull: {tasks: taskId} }, function(err, foundList) {
-		if (err) {
-			console.log(err);
-	  } else {
-			console.log('Successfully removed task from list ' + listTitle);
-		}
-	});
-}
-
-function deleteListAndListTasks(listTitle) {
-	List.findOne({title: listTitle}, function(err, foundList) {
-		if (err) {
-			console.log(err);
-		} else {
-			Task.deleteMany({_id: { $in: foundList.tasks}}, function(err) {
-				if (err) {
-					console.log(err);
-				} else {
-					console.log("Successfully deleted this list's tasks");					
-				}
-			});
-		}
-	})
-
-	List.findOneAndRemove({title: listTitle}, function(err) {
-		if (err) {
-			console.log(err);
-	  } else {
-	  	console.log('Successfully deleted list');
-		}
-	});
-}
-
-function findAndAuthenticateUser(email, password, req, response) {
-	User.findOne({email: email}, function(err, user) {
-		if (err) {
-			console.log(err);
-			response.redirect('/login');
-		} else {
-			if (user) {
-				bcrypt.compare(password, user.password, function(err, res) {
-					if (res) {
-						req.login(user, function(err) {
-						  if (err) { return next(err); }
-						  	console.log(req.user);
-							  return response.redirect('/lists');
-							});
-					} else {
-						response.redirect('/login');
-					}
-				});
-			} else {
-				console.log("no such user");
-				response.redirect('/register');
-			}
-		}
-	})
-}
 
 function createUser(email, password, req, response) {
 	User.findOne({email: email}, function(err, user) {
@@ -284,7 +163,6 @@ function createUser(email, password, req, response) {
 						  		return next(err); 
 						  		response.redirect('/login');
 						  	}
-						  	console.log(req.user);
 							  return response.redirect('/lists');
 							});
 						}
@@ -293,7 +171,137 @@ function createUser(email, password, req, response) {
 			});
 		}
 	});
-}
+};
+
+function findAndAuthenticateUser(email, password, req, response) {
+	User.findOne({email: email}, function(err, user) {
+		if (err) {
+			console.log(err);
+			response.redirect('/login');
+		} else {
+			if (user) {
+				bcrypt.compare(password, user.password, function(err, res) {
+					if (res) {
+						req.login(user, function(err) {
+						  if (err) { return next(err); }
+							  return response.redirect('/lists');
+							});
+					} else {
+						response.redirect('/login');
+					}
+				});
+			} else {
+				console.log("no such user");
+				response.redirect('/register');
+			}
+		}
+	})
+};
+
+function requireAuthentication(req, res, next) {
+	if (req.isAuthenticated()) {
+		next();
+	} else {
+		console.log('not authenticated');
+		res.redirect('/login');
+	}
+};
+
+function findUsersListByTitle(listTitle, userId, next) {
+	User.findOne({_id: userId}).populate('lists').exec(function(err, foundUser) {
+		if (err) { 
+			console.log(err)
+		} else {
+			list = foundUser.lists.find(function(list) {
+				return list.title === listTitle;
+			});
+			next();
+		}
+	})
+};
+
+function createNewListForUser(listTitle, userId) {
+	List.create({ title: listTitle }, function (err, createdList) {
+	  if (err) {
+			console.log(err);
+	  } else {
+	  	console.log('Successfully saved list ' + listTitle + ' to collection Lists.');
+	  	User.findOneAndUpdate({ _id: userId }, { $push: { lists: createdList } }, function(err, updatedUser) {
+				if (err) {
+					console.log(err);
+			  } else {
+			  	console.log('Successfully saved list: ' + createdList.title + ' to user: ' + userId);
+				}
+			});
+		}
+	});
+};
+
+function deleteListAndListTasks(listTitle) {
+	List.findOne({title: listTitle}, function(err, foundList) {
+		if (err) {
+			console.log(err);
+		} else {
+			Task.deleteMany({_id: { $in: foundList.tasks}}, function(err) {
+				if (err) {
+					console.log(err);
+				} else {
+					console.log("Successfully deleted this list's tasks");					
+				}
+			});
+		}
+	})
+
+	List.findOneAndRemove({title: listTitle}, function(err) {
+		if (err) {
+			console.log(err);
+	  } else {
+	  	console.log('Successfully deleted list');
+		}
+	});
+};
+
+function createNewTaskForUsersList(taskName, list) {
+	Task.create({ taskName: taskName }, function (err, task) {
+	  if (err) {
+			console.log(err);
+	  } else {
+	  	console.log('Successfully saved task ' + taskName + ' to collection Tasks, and to list: ' + list.title);
+	  	list.tasks.push(task);
+	  	list.save();
+		}
+	});
+};
+
+function deleteTaskAndRemoveFromList(taskId, listTitle) {
+	Task.findOneAndRemove({_id: taskId}, function(err) {
+		if (err) {
+			console.log(err);
+		} else {
+			console.log('Successfully deleted task');
+		}
+	});
+
+	List.findOneAndUpdate({title: listTitle}, { $pull: {tasks: taskId} }, function(err, foundList) {
+		if (err) {
+			console.log(err);
+	  } else {
+			console.log('Successfully removed task from list ' + listTitle);
+		}
+	});
+};
+
+function toggleCompleted(taskId) {
+	Task.findOne({_id: taskId}, function(err, foundTask) {
+		if (err) {
+			console.log(err);
+	  } else {
+	  	foundTask.completed = !foundTask.completed;
+			foundTask.save();
+	  	console.log('successfully toggled completed status to: ' + foundTask.completed);
+		}
+	});
+};
 
 
 // DEFINE ROUTES
@@ -304,7 +312,7 @@ app.get('/', function(req, res) {
 
 app.route('/lists')
 	.get(function(req, res) {
-		if (req.isAuthenticated()) {
+		requireAuthentication(req, res, function() {
 			User.findOne({_id: req.user._id}).populate('lists').exec(function(err, user) {
 				if (err) {
 					console.log(err);
@@ -316,57 +324,87 @@ app.route('/lists')
 						res.redirect('/login');
 					}
 				}
-			})
-		} else {
-			console.log('not authenticated');
-			res.redirect('/login');
-		}
+			});
+		});
 	})
 	.post(function(req, res) {
-		const newList = _.lowerCase(req.body.newList.toLowerCase());
-		console.log(newList);
-		createNewList(newList);
-
-		res.redirect('/lists');	
+		const newListTitle = _.lowerCase(req.body.newList.toLowerCase());
+		requireAuthentication(req, res, function() {
+			findUsersListByTitle(newListTitle, req.user._id, function() {
+				if (list) {
+					console.log('User already has a list with this title');
+				} else {
+					createNewListForUser(newListTitle, req.user._id);
+				}	
+			})
+			res.redirect('/lists/' + newListTitle);	
+		});
 	});
 
 app.route('/lists/:listTitle')
 	.get(function (req, res) {
-		listTitle = _.lowerCase(req.params.listTitle);
-		List.findOne({title: listTitle}).populate('tasks').exec(function(err, list) {
-			if (err) {
-				console.log(err);
-			} else {
+		const listTitle = _.lowerCase(req.params.listTitle);
+		requireAuthentication(req, res, function() {
+			findUsersListByTitle(listTitle, req.user._id, function() {
 				if (list) {
-					res.render('list', {today: today, list: list, showCompleted: showCompleted});
+					list.populate('tasks', function(err, populatedList) {
+						if (err) { 
+							console.log(err);
+							res.redirect('/lists/' + listTitle);
+						} else {
+							res.render('list', {today: today, list: populatedList, showCompleted: showCompleted});
+						}
+					})
 				} else {
 					res.redirect('/lists');
 				}
-			}
+			});
 		});
 	})
 	.delete(function(req, res) {
-		let listTitle = req.body.listTitle;
-		deleteListAndListTasks(listTitle);
-
-		res.redirect('/lists' + listTitle);
+		const listTitle = req.body.listTitle;
+		requireAuthentication(req, res, function() {
+			findUsersListByTitle(listTitle, req.user._id, function() {
+				if (list) {
+					deleteListAndListTasks(listTitle);
+				} else {
+					console.log('This user does not have a list with this title')
+				}
+				res.redirect('/lists');
+			});
+		});
 	})
 	
 app.route('/lists/:listTitle/tasks')
 	.post(function(req, res) {
+		const listTitle = req.body.listTitle;
 		const taskName = req.body.newItem;
-		const newTask = createNewTask(taskName);
-		pushToList(newTask, listTitle);
-
-		res.redirect('/lists' + listTitle);
+		requireAuthentication(req, res, function() {
+			findUsersListByTitle(listTitle, req.user._id, function() {
+				if (list) {
+					createNewTaskForUsersList(taskName, list);
+				} else {
+					console.log('This user does not have a list with this title')
+				}	
+				res.redirect('/lists/' + listTitle);
+			});
+		});
 	});
 
 app.route('/lists/:listTitle/tasks/:taskId')
 	.delete(function(req, res) {
+		const listTitle = req.body.listTitle;
 		const taskId = req.body.deletedTaskId;
-		deleteTaskAndRemoveFromList(taskId, listTitle);
-
-		res.redirect('/lists' + listTitle);
+		requireAuthentication(req, res, function() {
+			findUsersListByTitle(listTitle, req.user._id, function() {
+				if (list) {
+					deleteTaskAndRemoveFromList(taskId, listTitle);
+				} else {
+					console.log('This user does not have a list with this title')
+				}	
+				res.redirect('/lists/' + listTitle);
+			});
+		});
 	});
 
 app.route('/login')
@@ -404,12 +442,12 @@ app.get('/auth/facebook/callback',
     res.redirect('/lists');
   });
 
-app.get('/logout', function(req, res){
+app.get('/logout', function(req, res) {
   req.logout();
   res.redirect('/login');
 });
 
-app.get('/session', function(req, res){
+app.get('/session', function(req, res) {
 	console.log(req.session);
 	console.log(req.user);
   res.send('req.session.id = ' + req.session.id);
@@ -426,7 +464,7 @@ app.post('/toggleCompleted', function(req, res) {
 app.post('/toggleShowCompleted', function(req, res) {
 	showCompleted = JSON.parse(req.body.desiredStatus);
 
-	res.redirect('/' + currentUser + '/lists' + listTitle);
+	res.redirect('/lists/' + listTitle);
 })
 
 // START SERVER 
