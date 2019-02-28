@@ -115,11 +115,11 @@ img {
 }
 
 #login {
-  height: 200px;
+  height: 150px;
   background: #A683E3;
-  margin: 120px auto 0;
+  margin: 70px auto 0;
   text-align: center;
-  line-height: 180px;
+  line-height: 130px;
 }
 
 .task-list-wrapper {
@@ -140,6 +140,43 @@ img {
 
 .item:last-child {
   border-bottom: 0;
+}
+
+.item-login {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid #F1F1F1;
+}
+
+.no-border {
+  border-bottom: 0;
+}
+
+.item-login a, form {
+  margin: 0 auto;
+}
+
+.entry {
+  width: 250px;
+  height: 20px;
+  padding: 2px 10px;
+  border: solid 2px grey;
+  border-radius: 7px;
+  font-size: 0.9em;
+}
+
+.email {
+  width: 250px;
+}
+
+.password {
+  width: 225px;
+}
+
+.input-group {
+  margin: 10px 0;
+  text-align: center;
 }
 
 .help {
@@ -201,13 +238,13 @@ img {
 
 .position-top-left {
   position: absolute;
-  top: 20px;
+  top: 10px;
   left: 20px;
 }
 
 .position-top-right {
   position: absolute;
-  top: 20px;
+  top: 10px;
   right: 20px;
 }
 

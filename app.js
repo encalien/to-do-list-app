@@ -34,7 +34,8 @@ app.use(passport.session());
 
 // SET UP DATABASE
 
-mongoose.connect('mongodb://localhost:27017/todolistDB', {useNewUrlParser: true});
+// mongoose.connect('mongodb://localhost:27017/todolistDB', {useNewUrlParser: true});
+mongoose.connect('mongodb+srv://admin-katarina:' + process.env.ATLAS_PASSWORD + '@todolistcluster-4rkfw.mongodb.net/todolistDB', {useNewUrlParser: true});
 
 const taskSchema = new mongoose.Schema({
   taskName: {
@@ -461,7 +462,11 @@ app.get('/logout', function(req, res) {
 
 // START SERVER 
 
-app.listen(3000, function() {
-	console.log('Server running on port 3000');
+let port = process.env.PORT;
+if (port == null || port == "") {
+	port = 3000
+}
+app.listen(port, function() {
+	console.log('Server running');
 });
 
