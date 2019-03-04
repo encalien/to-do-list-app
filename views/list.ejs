@@ -14,13 +14,15 @@
 	<div class="item">
 		<form action="/lists/:listTitle/tasks" method="POST">
 			<input type="text" name="newItem" placeholder="new task" autocomplete="off" autofocus="true">
+			<input type="date" name="dueDate"
+			 value="<%= tomorrow.format().slice(0, -15) %>">
 			<input type="hidden" name="listTitle" value="<%= list.title %>">
 			<button class="btn add" type="submit">+</button>
 		</form>
 	</div>
 </div>
 
-<!-- List all complete tasks -->
+<!-- List incomplete and completed tasks -->
 <div class="task-list-wrapper">
 	<% if (showCompleted) { %>
 			<div class="left">
@@ -33,7 +35,7 @@
 			</div>
 	<% } else { %>
 
-	<!-- List all incomplete tasks -->
+	<!-- List only incomplete tasks -->
 		<h4>PENDING TASKS</h4>
 		<%- include("tasks", {completed: false}) %>
 	<% } %>
@@ -51,7 +53,7 @@
 </div>
 
 <div class="day-display position-bottom-left">
-	<h2>Today is <%= today %></h2>
+	<h2>Today is <%= today.format('dddd, MMMM Do') %></h2>
 </div>
 
 <%- include("footer") %>

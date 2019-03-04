@@ -33,9 +33,11 @@
 		<% }); %>
 	</div>
 
+	<a href="/lists/today">Due Today</a>
+
 	
 
 	<div class="day-display position-bottom-left">
-	  <h2>Today is <%= today %></h2>
+	  <h2>Today is <%= today.format('dddd, MMMM Do') %></h2>
   </div>
 <%- include("footer") %>

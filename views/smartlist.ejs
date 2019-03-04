@@ -1,10 +1,23 @@
+<%- include("header") %>
+
+<div class="header">
+	<a href="/lists"><button type="button" class="btn navigation position-top-left">
+		<img src="/arrow-left.png"> ALL LISTS</button></a>
+	<div class="box" id="heading">
+		<h1><%= dueDate.toUpperCase(); %></h1>
+	</div>
+	<a href="/logout"><button type="button" class="btn navigation position-top-right">LOG OUT</button></a>
+</div>
+
+	<!-- List only incomplete tasks -->
+		<h4>PENDING TASKS</h4>
 <div class="box scroll-box">
 
-	<% if (list.tasks.filter(task => task.completed == completed).length > 4) { %>
+	<% if (dueTasks.filter(task => task.completed == completed).length > 4) { %>
 		<div class="item">
 			<p class="help">Scroll down to see more tasks!</p>
 		</div>
-	<% } else if (list.tasks.filter(task => task.completed == completed).length == 0) { %>
+	<% } else if (dueTasks.filter(task => task.completed == completed).length == 0) { %>
 		<div class="item">
 			<% if (!completed) { %>
 				<p class="help">Well done!<br>You have no pending tasks.</p>
@@ -14,21 +27,21 @@
 		</div>
 	<% } %>
 
-	<% list.tasks.forEach(function(task) { %>
+	<% dueTasks.forEach(function(task) { %>
 
 		<% if (task.completed == completed) { %>
 			<div class="item">
 
 				<form class="wider-form" action="/lists/:listTitle/tasks/:taskId?_method=PATCH" method="POST">
 					<input type="hidden" name="completedTaskId" value="<%= task._id %>">
-					<input type="hidden" name="listTitle" value="<%= list.title %>">
+					<input type="hidden" name="listTitle" value="<%= dueDate %>">
 					<input type="checkbox" <% if (task.completed) { %> checked <% } %> name="completed" onChange="this.form.submit()">
 					<p><%= task.taskName %></p>
 					<small><%= task.dueDate.toLocaleString() %></small>
 				</form>
 
 				<form class="smaller-form" action="/lists/:listTitle/tasks/:taskId?_method=DELETE" method="POST">
-					<input type="hidden" name="listTitle" value="<%= list.title %>">
+					<input type="hidden" name="listTitle" value="<%= dueDate %>">
 					<input type="hidden" name="deletedTaskId" value="<%= task._id %>">
 					<button class="btn delete" type="submit">-</button>
 				</form>
@@ -38,3 +51,9 @@
 
 	<% }); %>
 </div>
+
+<div class="day-display position-bottom-left">
+	<h2>Today is <%= today.format('dddd, MMMM Do') %></h2>
+</div>
+
+<%- include("footer") %>

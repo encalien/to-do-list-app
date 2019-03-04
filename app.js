@@ -12,6 +12,7 @@ const FacebookStrategy = require('passport-facebook').Strategy;
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+const moment = require('moment');
 
 const app = express();
 
@@ -34,8 +35,7 @@ app.use(passport.session());
 
 // SET UP DATABASE
 
-// mongoose.connect('mongodb://localhost:27017/todolistDB', {useNewUrlParser: true});
-mongoose.connect('mongodb+srv://admin-katarina:' + process.env.ATLAS_PASSWORD + '@todolistcluster-4rkfw.mongodb.net/todolistDB', {useNewUrlParser: true});
+mongoose.connect(process.env.DATABASE_URL, {useNewUrlParser: true});
 
 const taskSchema = new mongoose.Schema({
   taskName: {
@@ -134,7 +134,6 @@ passport.deserializeUser(function(id, done) {
 });
 
 let showCompleted = false;
-const today = date.getDate();
 let day;
 
 function createUser(email, password, req, response) {
@@ -258,8 +257,8 @@ function deleteListAndListTasks(listId) {
 	});
 };
 
-function createNewTaskForUsersList(taskName, list) {
-	Task.create({ taskName: taskName }, function (err, task) {
+function createNewTaskForUsersList(taskName, dueDate, list) {
+	Task.create({taskName: taskName, dueDate: new Date(dueDate) }, function (err, task) {
 	  if (err) {
 			console.log(err);
 	  } else {
@@ -300,6 +299,30 @@ function toggleCompleted(taskId) {
 	});
 };
 
+function displayDueBy(req, res, userId, dueDate) {
+	User.findOne({_id: userId}).populate('lists').exec(function(err, foundUser) {
+		if (err) { 
+			console.log(err)
+		} else {
+			foundUser.lists.forEach(function(list) {
+				list.populate('tasks', function(err, populatedList) {
+					if (err) { 
+						console.log(err);
+						res.redirect('/lists/');
+					} else {
+						var dueTasks = [];
+						populatedList.tasks.forEach(function(task) {
+							if (moment().isSame(task.dueDate, 'day')) {
+								dueTasks.push(task);
+							}
+						})
+						res.render('smartlist', {today: moment(), dueTasks: dueTasks, dueDate: dueDate, showCompleted: showCompleted, completed: false});
+					}
+				})
+			})
+		}
+	});
+}
 
 // DEFINE ROUTES
 
@@ -315,7 +338,7 @@ app.route('/lists')
 					console.log(err);
 				} else {
 					if (user) {
-						res.render('lists', {lists: user.lists, today: today});
+						res.render('lists', {lists: user.lists, today: moment()});
 					} else {
 						console.log('user not found');
 						res.redirect('/login');
@@ -342,24 +365,31 @@ app.route('/lists/:listTitle')
 	.get(function (req, res) {
 		const listTitle = _.lowerCase(req.params.listTitle);
 		if (req.query.showCompleted) {
-			showCompleted = JSON.parse(req.query.showCompleted);
-		}
-		requireAuthentication(req, res, function() {
-			findUsersListByTitle(listTitle, req.user._id, function() {
-				if (list) {
-					list.populate('tasks', function(err, populatedList) {
-						if (err) { 
-							console.log(err);
-							res.redirect('/lists/' + listTitle);
-						} else {
-							res.render('list', {today: today, list: populatedList, showCompleted: showCompleted});
-						}
-					})
-				} else {
-					res.redirect('/lists');
-				}
+				showCompleted = JSON.parse(req.query.showCompleted);
+			}
+
+		if (listTitle == 'today') {
+			requireAuthentication(req, res, function() {
+				displayDueBy(req, res, req.user._id, listTitle);
 			});
-		});
+		} else{
+			requireAuthentication(req, res, function() {
+				findUsersListByTitle(listTitle, req.user._id, function() {
+					if (list) {
+						list.populate('tasks', function(err, populatedList) {
+							if (err) { 
+								console.log(err);
+								res.redirect('/lists/' + listTitle);
+							} else {
+								res.render('list', {today: moment(), tomorrow: moment().add(1, 'days'), list: populatedList, showCompleted: showCompleted});
+							}
+						})
+					} else {
+						res.redirect('/lists');
+					}
+				});
+			});
+		}
 	})
 	.delete(function(req, res) {
 		const listTitle = req.body.listTitle; // home
@@ -386,10 +416,11 @@ app.route('/lists/:listTitle/tasks')
 	.post(function(req, res) {
 		const listTitle = req.body.listTitle;
 		const taskName = req.body.newItem;
+		const dueDate = req.body.dueDate;
 		requireAuthentication(req, res, function() {
 			findUsersListByTitle(listTitle, req.user._id, function() {
 				if (list) {
-					createNewTaskForUsersList(taskName, list);
+					createNewTaskForUsersList(taskName, dueDate, list);
 				} else {
 					console.log('This user does not have a list with this title')
 				}	
@@ -459,6 +490,14 @@ app.get('/logout', function(req, res) {
   req.logout();
   res.redirect('/login');
 });
+
+app.get('/date', function(req, res) {
+
+	var now = moment();
+	console.log(now.toISOString());
+	console.log(now.toISOString(true));
+	console.log(now.format().slice(0, -9));
+})
 
 // START SERVER 
 
