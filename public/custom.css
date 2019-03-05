@@ -37,7 +37,10 @@ hr {
 	border-top: 4px dotted #c1c1c1;
 }
 
-
+input:focus {
+	box-shadow: none;
+	outline: 1px dotted grey;
+}
 
 
 
@@ -133,6 +136,11 @@ hr {
 .help {
   font-size: 1em;
   text-align: center;
+}
+
+.item-new {
+	padding-top: 0;
+	padding-bottom: 0;
 }
 
 .list-group-item {

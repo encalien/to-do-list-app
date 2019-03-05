@@ -136,8 +136,6 @@ passport.deserializeUser(function(id, done) {
 });
 
 let showCompleted = false;
-let day;
-
 
 function createUser(email, password, req, res) {
 	bcrypt.hash(password, saltRounds, function(err, hash) {
@@ -165,14 +163,12 @@ function createUser(email, password, req, res) {
 };
 
 function findAndAuthenticateUser(email, password, req, res, next) {
-// Find user
 	User.findOne({email: email}, function(err, user) {
 		if (err) {
 			console.log(err);
 			res.redirect('/login');
 		} else {
 			if (user) {
-// Authenticate user
 				bcrypt.compare(password, user.password, function(err, result) {
 					if (result) {
 						req.login(user, function(err) {
