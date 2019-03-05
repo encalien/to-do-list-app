@@ -1,8 +1,7 @@
 <%- include("header") %>
 
 <div class="box" id="login">
-	<h1>To Do List</h1>
-  <p>Register or log in below!</p>
+	<span><h1><%= route.toUpperCase() %></h1></span>
 </div>
 
 <div class="box">
@@ -15,7 +14,7 @@
 	</div>
 
   <div class="item-login no-border">
-    <form action="/login" method="POST">
+    <form action="/<%= route %>" method="POST">
       <div class="input-group">
         <label>E-mail:</label>
         <input class="entry email" type="email" name="email"/>
@@ -25,8 +24,7 @@
         <input class="entry password" type="password" name="password"/>
       </div>
       <div class="input-group">
-        <input class="btn navigation login" type="submit" value="Register"/>
-        <input class="btn navigation login" type="submit" value="Log In"/>
+        <input class="btn navigation" type="submit" value="<%= route.toUpperCase() %>"/>
       </div>
     </form>
   </div>

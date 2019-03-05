@@ -119,16 +119,7 @@ img {
   background: #A683E3;
   margin: 70px auto 0;
   text-align: center;
-}
-
-#login p {
-  padding: 0;
-  color: #fff;
-  font-weight: 300;
-}
-
-#login h1 {
-  padding: 40px 0 0;
+  line-height: 130px;
 }
 
 .task-list-wrapper {
@@ -216,12 +207,7 @@ img {
   border-color: #A683E3;
   border-width: 3px;
   margin: 20px auto;
-}
-
-.login {
-  width: 150px;
-  float: left;
-  margin: 20px 15px;
+  
 }
 
 .add {
