@@ -164,39 +164,6 @@ function createUser(email, password, req, res) {
 	});
 };
 
-// function createUser(email, password, req, response) {
-// 	User.findOne({email: email}, function(err, user) {
-// 		if (user) {
-// 			console.log("user already exists");
-// 			response.redirect('/login');
-// 		} else {
-// 			bcrypt.hash(password, saltRounds, function(err, hash) {
-// 			  if (err) {
-// 					console.log(err);
-// 					response.redirect('/register');
-// 				} else {
-// 					// return bindings.encrypt(data, salt, cb);
-// 					User.create({email: email, password: hash}, function(err, user) {
-// 						if (err) {
-// 							console.log(err);
-// 							response.redirect('/register');
-// 						} else {
-// 							console.log('created user: ' + user);
-// 							req.login(user, function(err) {
-// 						  	if (err) { 
-// 						  		return next(err); 
-// 						  		response.redirect('/login');
-// 						  	}
-// 							  return response.redirect('/lists');
-// 							});
-// 						}
-// 					})
-// 				}
-// 			});
-// 		}
-// 	});
-// };
-
 function findAndAuthenticateUser(email, password, req, res, next) {
 // Find user
 	User.findOne({email: email}, function(err, user) {
@@ -227,31 +194,6 @@ function findAndAuthenticateUser(email, password, req, res, next) {
 		}
 	})
 };
-
-// function findAndAuthenticateUser(email, password, req, res) {
-// 	User.findOne({email: email}, function(err, user) {
-// 		if (err) {
-// 			console.log(err);
-// 			res.redirect('/login');
-// 		} else {
-// 			if (user) {
-// 				bcrypt.compare(password, user.password, function(err, result) {
-// 					if (result) {
-// 						req.login(user, function(err) {
-// 						  if (err) { return next(err); }
-// 							  return res.redirect('/lists');
-// 							});
-// 					} else {
-// 						res.redirect('/login');
-// 					}
-// 				});
-// 			} else {
-// 				console.log("no such user");
-// 				res.redirect('/register');
-// 			}
-// 		}
-// 	})
-// };
 
 function requireAuthentication(req, res, next) {
 	if (req.isAuthenticated()) {
@@ -291,6 +233,64 @@ function createNewListForUser(listTitle, userId) {
 		}
 	});
 };
+
+function displayListTasks(req, res, list) {
+	list.populate('tasks', function(err, populatedList) {
+		if (err) { 
+			console.log(err);
+			res.redirect('/lists/' + list.title);
+		} else {
+			res.render('list', {
+				today: moment(), 
+				list: populatedList, 
+				showCompleted: showCompleted
+			});
+		}
+	})
+};
+
+function displayDueBy(req, res, userId, dueDate) {
+	User.findOne({_id: userId}).populate('lists').exec(function(err, foundUser) {
+		if (err) { 
+			console.log(err)
+		} else {
+			foundUser.lists.forEach(function(list) {
+				list.populate('tasks', function(err, populatedList) {
+					if (err) { 
+						console.log(err);
+						res.redirect('/lists/');
+					} else {
+						var dueTasks = [];
+						populatedList.tasks.forEach(function(task) {
+							switch(dueDate) {
+							  case 'today':
+							    if (moment().isSame(task.dueDate, 'day')) {
+										dueTasks.push(task);
+									}
+							    break;
+							  case 'this week':
+							    if (moment().isSame(task.dueDate, 'week')) {
+										dueTasks.push(task);
+									}
+							    break;
+						    case 'overdue':
+							    if (moment().isAfter(task.dueDate, 'day')) {
+										dueTasks.push(task);
+									}
+							    break;
+							}
+						})
+						res.render('list', {
+							today: moment(), 
+							list: {title: dueDate, tasks: dueTasks},
+							showCompleted: showCompleted
+						});
+					}
+				})
+			})
+		}
+	});
+}
 
 function deleteListAndListTasks(listId) {
 	List.findOne({_id: listId}, function(err, foundList) {
@@ -358,75 +358,6 @@ function toggleCompleted(taskId) {
 	});
 };
 
-function displayListTasks(req, res, list) {
-	list.populate('tasks', function(err, populatedList) {
-		if (err) { 
-			console.log(err);
-			res.redirect('/lists/' + list.title);
-		} else {
-			res.render('list', {
-				today: moment(), 
-				list: populatedList, 
-				showCompleted: showCompleted
-			});
-		}
-	})
-};
-
-function displayDueBy(req, res, userId, dueDate) {
-	User.findOne({_id: userId}).populate('lists').exec(function(err, foundUser) {
-		if (err) { 
-			console.log(err)
-		} else {
-			foundUser.lists.forEach(function(list) {
-				list.populate('tasks', function(err, populatedList) {
-					if (err) { 
-						console.log(err);
-						res.redirect('/lists/');
-					} else {
-						var dueTasks = [];
-						populatedList.tasks.forEach(function(task) {
-							if (moment().isSame(task.dueDate, 'day')) {
-								dueTasks.push(task);
-							}
-						})
-						res.render('list', {
-							today: moment(), 
-							list: {title: dueDate, tasks: dueTasks},
-							showCompleted: showCompleted
-						});
-					}
-				})
-			})
-		}
-	});
-}
-
-// function displayDueBy(req, res, userId, dueDate) {
-// 	User.findOne({_id: userId}).populate('lists').exec(function(err, foundUser) {
-// 		if (err) { 
-// 			console.log(err)
-// 		} else {
-// 			foundUser.lists.forEach(function(list) {
-// 				list.populate('tasks', function(err, populatedList) {
-// 					if (err) { 
-// 						console.log(err);
-// 						res.redirect('/lists/');
-// 					} else {
-// 						var dueTasks = [];
-// 						populatedList.tasks.forEach(function(task) {
-// 							if (moment().isSame(task.dueDate, 'day')) {
-// 								dueTasks.push(task);
-// 							}
-// 						})
-// 						res.render('smartlist', {today: moment(), dueTasks: dueTasks, dueDate: dueDate, showCompleted: showCompleted, completed: false});
-// 					}
-// 				})
-// 			})
-// 		}
-// 	});
-// }
-
 // DEFINE ROUTES
 
 app.get('/', function(req, res) {
@@ -472,7 +403,7 @@ app.route('/lists/:listTitle')
 		}
 
 		requireAuthentication(req, res, function() {
-			if (listTitle == 'today') {
+			if (listTitle == 'today' || listTitle == 'this week' || listTitle == 'overdue') {
 				displayDueBy(req, res, req.user._id, listTitle);
 			} else {
 				findUsersListByTitle(listTitle, req.user._id, function() {

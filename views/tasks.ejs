@@ -32,7 +32,7 @@
 						<p><%= task.taskName %></p>
 					</div>
 					<div class="col-md-4 wrapper-center">
-						<small><%= moment(task.dueDate).format('ddd, MMM Do') %></small>
+						<small <% if (moment().isAfter(task.dueDate, 'day')) { %> style="color: red" <% } %> ><%= moment(task.dueDate).format('ddd, MMM Do') %></small>
 					</div>
 					<div class="col-md-2 no-padding wrapper-center">
 						<form action="/lists/:listTitle/tasks/:taskId?_method=DELETE" method="POST">
