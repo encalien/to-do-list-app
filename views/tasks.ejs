@@ -1,39 +1,50 @@
-<div class="box scroll-box">
+<ul class="list-group list-group-flush">
 
+<!-- Display help text -->
 	<% if (list.tasks.filter(task => task.completed == completed).length > 4) { %>
-		<div class="item">
+		<li class="list-group-item">
 			<p class="help">Scroll down to see more tasks!</p>
-		</div>
+		</li>
 	<% } else if (list.tasks.filter(task => task.completed == completed).length == 0) { %>
-		<div class="item">
+		<li class="list-group-item">
 			<% if (!completed) { %>
-				<p class="help">Well done!<br>You have no pending tasks.</p>
+				<p class="help">Well done! You have no pending tasks.</p>
 			<% } else { %>
 				<p class="help">Come on, complete your first task!</p>
 			<% } %>
-		</div>
+		</li>
 	<% } %>
 
+<!-- Display tasks -->
 	<% list.tasks.forEach(function(task) { %>
-
 		<% if (task.completed == completed) { %>
-			<div class="item">
 
-				<form class="wider-form" action="/lists/:listTitle/tasks/:taskId?_method=PATCH" method="POST">
-					<input type="hidden" name="completedTaskId" value="<%= task._id %>">
-					<input type="hidden" name="listTitle" value="<%= list.title %>">
-					<input type="checkbox" <% if (task.completed) { %> checked <% } %> name="completed" onChange="this.form.submit()">
-					<p><%= task.taskName %></p>
-				</form>
+			<li class="list-group-item">
+				<div class="row">
+					<div class="col-md-1 wrapper-center">
+						<form action="/lists/:listTitle/tasks/:taskId?_method=PATCH" method="POST">
+							<input type="hidden" name="completedTaskId" value="<%= task._id %>">
+							<input type="hidden" name="listTitle" value="<%= list.title %>">
+							<input type="checkbox" <% if (task.completed) { %> checked <% } %> name="completed" onChange="this.form.submit()">
+						</form>
+					</div>
+					<div class="col-md-5 wrapper-vertical-align">
+						<p><%= task.taskName %></p>
+					</div>
+					<div class="col-md-4 wrapper-center">
+						<small <% if (moment().isAfter(task.dueDate, 'day')) { %> style="color: red" <% } %> ><%= moment(task.dueDate).format('ddd, MMM Do') %></small>
+					</div>
+					<div class="col-md-2 no-padding wrapper-center">
+						<form action="/lists/:listTitle/tasks/:taskId?_method=DELETE" method="POST">
+							<input type="hidden" name="listTitle" value="<%= list.title %>">
+							<input type="hidden" name="deletedTaskId" value="<%= task._id %>">
+							<button class="btn btn-delete btn-circle" type="submit"><i class="fas fa-minus-circle size-2x"></i></button>
+						</form>
+					</div>
+				</div>
+			</li>
 
-				<form class="smaller-form" action="/lists/:listTitle/tasks/:taskId?_method=DELETE" method="POST">
-					<input type="hidden" name="listTitle" value="<%= list.title %>">
-					<input type="hidden" name="deletedTaskId" value="<%= task._id %>">
-					<button class="btn delete" type="submit">-</button>
-				</form>
-
-			</div>
 		<% } %>
-
 	<% }); %>
-</div>
+
+</ul>
