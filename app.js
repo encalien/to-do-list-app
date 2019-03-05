@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const request = require('request');
-const date = require(__dirname + '/date.js');
 const mongoose = require('mongoose');
 const _ = require('lodash');
 const methodOverride = require('method-override');
