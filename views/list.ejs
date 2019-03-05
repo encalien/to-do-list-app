@@ -1,59 +1,95 @@
 <%- include("header") %>
 
-<div class="header">
-	<a href="/lists"><button type="button" class="btn navigation position-top-left">
-		<img src="/arrow-left.png"> ALL LISTS</button></a>
-	<div class="box" id="heading">
-		<h1><%= list.title.toUpperCase(); %></h1>
-	</div>
-	<a href="/logout"><button type="button" class="btn navigation position-top-right">LOG OUT</button></a>
-</div>
+<div class="container">
+  <div class="row">
 
-<!-- Create new task form -->
-<div class="box">
-	<div class="item">
-		<form action="/lists/:listTitle/tasks" method="POST">
-			<input type="text" name="newItem" placeholder="new task" autocomplete="off" autofocus="true">
-			<input type="date" name="dueDate"
-			 value="<%= tomorrow.format().slice(0, -15) %>">
-			<input type="hidden" name="listTitle" value="<%= list.title %>">
-			<button class="btn add" type="submit">+</button>
-		</form>
-	</div>
-</div>
+<!-- Add back to lists link -->
+	  <div class="col-md-3">
+	  	<a href="/lists" role="button" class="btn btn-outline-purple position-top-left"><i class="fas fa-chevron-left"></i> ALL LISTS</a>
+	  </div>
 
-<!-- List incomplete and completed tasks -->
-<div class="task-list-wrapper">
-	<% if (showCompleted) { %>
-			<div class="left">
-				<h4>PENDING TASKS</h4>
-				<%- include("tasks", {completed: false}) %>
+<!-- Display heading -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title" id="heading"><%= list.title.toUpperCase(); %></h2>
+        </div>
+        <ul class="list-group list-group-flush">
+
+<!-- Create new task -->
+          <li class="list-group-item no-padding">
+						<form action="/lists/:listTitle/tasks" method="POST">
+							<div class="row">
+								<div class="col-md-6">
+									<input type="text" name="newItem" placeholder="new task" autocomplete="off" autofocus>
+								</div>
+								<div class="col-md-4">
+									<input class="datepicker" width="120" name="dueDate" placeholder="due by">
+								</div>
+								<input type="hidden" name="listTitle" value="<%= list.title %>">
+								<div class="col-md-2 no-padding wrapper-center">
+									<button class="btn btn-add btn-circle" type="submit"><i class="fas fa-plus-circle fa-3x add"></i></button>
+								</div>
+							</div>
+						</form>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+<!-- Add logout link -->
+	  <div class="col-md-3">
+	  	<a href="/logout" role="button" class="btn btn-outline-purple position-top-right">LOG OUT</a>
+	  </div>
+  </div>
+
+<!-- List pending and completed tasks -->
+	<div class="row justify-content-around">
+		<% if (showCompleted) { %>
+				<div class="col-md-6">
+					<div class="card">
+		      	<div class="card-body">
+		          <p class="card-text">PENDING TASKS</p>
+		        </div>
+						<%- include("tasks", {completed: false}) %>
+					</div>
+				</div>
+				<div class="col-md-6">
+					<div class="card">
+		      	<div class="card-body">
+		          <p class="card-text">COMPLETED TASKS</p>
+		        </div>
+						<%- include("tasks", {completed: true}) %>
+					</div>
+				</div>
+		<% } else { %>
+
+<!-- List only pending tasks -->
+			<div class="col-md-6">
+				<div class="card">
+	      	<div class="card-body">
+	          <p class="card-text">PENDING TASKS</p>
+	        </div>
+					<%- include("tasks", {completed: false}) %>
+				</div>
 			</div>
-			<div class="right">
-				<h4>COMPLETED TASKS</h4>
-				<%- include("tasks", {completed: true}) %>
-			</div>
-	<% } else { %>
-
-	<!-- List only incomplete tasks -->
-		<h4>PENDING TASKS</h4>
-		<%- include("tasks", {completed: false}) %>
-	<% } %>
-</div>
+		<% } %>
+	</div>
 
 <!-- Toggle show completed -->
-<div>
+<div class="row justify-content-center">
 	<a href="/lists/<%= list.title%>?showCompleted=<%= !showCompleted %>">
 		<% if (showCompleted) { %>
-			<button class="btn navigation center">HIDE COMPLETED</button>
+			<button class="btn btn-outline-purple center">HIDE COMPLETED</button>
 		<% } else { %>
-			<button class="btn navigation center">SHOW COMPLETED</button>
+			<button class="btn btn-outline-purple center">SHOW COMPLETED</button>
 		<% } %>
 	</a>
 </div>
 
-<div class="day-display position-bottom-left">
-	<h2>Today is <%= today.format('dddd, MMMM Do') %></h2>
-</div>
+<!-- Display date -->
+	<div id="day-display">
+	  <h2>Today is <%= today.format('dddd, MMMM Do') %></h2>
+  </div>
 
 <%- include("footer") %>

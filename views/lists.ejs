@@ -1,43 +1,86 @@
 <%- include("header") %>
-	<div class="heading">
-		<div class="box" id="heading">
-			<h1>YOUR LISTS</h1>
-		</div>
-		<a href="/logout"><button type="button" class="btn navigation position-top-right">LOG OUT</button></a>
-	</div>
+
+<div class="container">
+  <div class="row">
 
 <!-- Create new list -->
-	<div class="box">
-		<div class="item">
-			<form action="/lists" method="POST">
-				<input type="text" name="newList" placeholder="new list" autocomplete="off" autofocus="true">
-				<button class="btn add" type="submit">+</button>
-			</form>
-		</div>
+    <div class="col-md-6 offset-md-3">
+      <div class="card">
+        <div class="card-body">
+          <h2 class="card-title" id="heading">YOUR LISTS</h2>
+        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item no-padding">
+            <form action="/lists" method="POST">
+              <div class="row">
+                <div class="col-md-10">
+							   <input type="text" name="newList" placeholder="new list" autocomplete="off" autofocus="true">
+                </div>
+                <div class="col-md-2 no-padding wrapper-center">
+    							<button class="btn btn-add btn-circle" type="submit"><i class="fas fa-plus-circle fa-3x add"></i></button>
+                </div>
+              </div>
+						</form>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+<!-- Add logout -->
+	  <div class="col-md-3">
+	  	<a href="/logout" role="button" class="btn btn-outline-purple position-top-right">LOG OUT</a>
+	  </div>
+  </div>
+
+<!-- Display smart lists -->
+	<div class="row justify-content-around">
+    <div class="col-md-6">
+      <div class="card">
+      	<div class="card-body">
+          <p class="card-text">SMART LISTS</p>
+        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item">
+          	<a href="/lists/today">Due Today</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+<!-- Display user's lists -->
+    <div class="col-md-6">
+      <div class="card">
+      	<div class="card-body">
+          <p class="card-text">CUSTOM LISTS</p>
+        </div>
+        <ul class="list-group list-group-flush">
+
+					<% lists.forEach(function(list) { %>
+
+						<li class="list-group-item">
+							<div class="row">
+								<div class="col-md-10">
+									<a href="/lists/<%= list.title %>"><%= list.title.toUpperCase(); %></a>
+								</div>
+								<div class="col-md-2 wrapper-center">
+									<form action="/lists/:listTitle?_method=DELETE" method="POST">
+										<input type="hidden" name="listTitle" value="<%= list.title %>">
+										<button class="btn btn-delete btn-circle" type="submit"><i class="fas fa-minus-circle size-2x"></i></button>
+									</form>
+								</div>
+							</div>
+						</li>
+						
+						<% }); %>
+
+        </ul>
+      </div>
+    </div>
 	</div>
 
-<!-- Display existing lists -->
-	<h4>YOUR LISTS</h4>
-	<div class="box scroll-box">
-		<% lists.forEach(function(list) { %>
-		<div class="item">
-			<div class="wider-form">
-				<p id="lists-list"><a href="/lists/<%= list.title %>"><%= list.title.toUpperCase(); %></a></p>
-			</div>
-			<form class="smaller-form" action="/lists/:listTitle?_method=DELETE" method="POST">
-				<input type="hidden" name="listTitle" value="<%= list.title %>">
-				<button class="btn delete" type="submit">-</button>
-			</form>
-		</div>
-		
-		<% }); %>
-	</div>
-
-	<a href="/lists/today">Due Today</a>
-
-	
-
-	<div class="day-display position-bottom-left">
+<!-- Display date -->
+	<div id="day-display">
 	  <h2>Today is <%= today.format('dddd, MMMM Do') %></h2>
   </div>
+
 <%- include("footer") %>

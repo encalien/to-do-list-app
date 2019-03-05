@@ -21,6 +21,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
 
+app.locals.moment = moment;
+
 // SET UP SESSION
 
 app.use(session({
@@ -136,63 +138,120 @@ passport.deserializeUser(function(id, done) {
 let showCompleted = false;
 let day;
 
-function createUser(email, password, req, response) {
-	User.findOne({email: email}, function(err, user) {
-		if (user) {
-			console.log("user already exists");
-			response.redirect('/login');
+
+function createUser(email, password, req, res) {
+	bcrypt.hash(password, saltRounds, function(err, hash) {
+	  if (err) {
+			console.log(err);
+			res.redirect('/register');
 		} else {
-			bcrypt.hash(password, saltRounds, function(err, hash) {
-			  if (err) {
+			User.create({email: email, password: hash}, function(err, user) {
+				if (err) {
 					console.log(err);
-					response.redirect('/register');
+					res.redirect('/register');
 				} else {
-					// return bindings.encrypt(data, salt, cb);
-					User.create({email: email, password: hash}, function(err, user) {
-						if (err) {
-							console.log(err);
-							response.redirect('/register');
-						} else {
-							console.log('created user: ' + user);
-							req.login(user, function(err) {
-						  	if (err) { 
-						  		return next(err); 
-						  		response.redirect('/login');
-						  	}
-							  return response.redirect('/lists');
-							});
-						}
-					})
+					console.log('created user: ' + user);
+					req.login(user, function(err) {
+				  	if (err) { 
+				  		console.log(err);
+				  		res.redirect('/login');
+				  	}
+					  res.redirect('/lists');
+					});
 				}
-			});
+			})
 		}
 	});
 };
 
-function findAndAuthenticateUser(email, password, req, response) {
+// function createUser(email, password, req, response) {
+// 	User.findOne({email: email}, function(err, user) {
+// 		if (user) {
+// 			console.log("user already exists");
+// 			response.redirect('/login');
+// 		} else {
+// 			bcrypt.hash(password, saltRounds, function(err, hash) {
+// 			  if (err) {
+// 					console.log(err);
+// 					response.redirect('/register');
+// 				} else {
+// 					// return bindings.encrypt(data, salt, cb);
+// 					User.create({email: email, password: hash}, function(err, user) {
+// 						if (err) {
+// 							console.log(err);
+// 							response.redirect('/register');
+// 						} else {
+// 							console.log('created user: ' + user);
+// 							req.login(user, function(err) {
+// 						  	if (err) { 
+// 						  		return next(err); 
+// 						  		response.redirect('/login');
+// 						  	}
+// 							  return response.redirect('/lists');
+// 							});
+// 						}
+// 					})
+// 				}
+// 			});
+// 		}
+// 	});
+// };
+
+function findAndAuthenticateUser(email, password, req, res, next) {
+// Find user
 	User.findOne({email: email}, function(err, user) {
 		if (err) {
 			console.log(err);
-			response.redirect('/login');
+			res.redirect('/login');
 		} else {
 			if (user) {
-				bcrypt.compare(password, user.password, function(err, res) {
-					if (res) {
+// Authenticate user
+				bcrypt.compare(password, user.password, function(err, result) {
+					if (result) {
 						req.login(user, function(err) {
-						  if (err) { return next(err); }
-							  return response.redirect('/lists');
-							});
+						  if (err) {
+						  	console.log(err);
+						  	res.redirect('/login');
+						  } else {
+							  res.redirect('/lists');
+							}
+						});
 					} else {
-						response.redirect('/login');
+						res.redirect('/login');
 					}
 				});
 			} else {
 				console.log("no such user");
-				response.redirect('/register');
+				next();
 			}
 		}
 	})
 };
+
+// function findAndAuthenticateUser(email, password, req, res) {
+// 	User.findOne({email: email}, function(err, user) {
+// 		if (err) {
+// 			console.log(err);
+// 			res.redirect('/login');
+// 		} else {
+// 			if (user) {
+// 				bcrypt.compare(password, user.password, function(err, result) {
+// 					if (result) {
+// 						req.login(user, function(err) {
+// 						  if (err) { return next(err); }
+// 							  return res.redirect('/lists');
+// 							});
+// 					} else {
+// 						res.redirect('/login');
+// 					}
+// 				});
+// 			} else {
+// 				console.log("no such user");
+// 				res.redirect('/register');
+// 			}
+// 		}
+// 	})
+// };
 
 function requireAuthentication(req, res, next) {
 	if (req.isAuthenticated()) {
@@ -299,6 +358,21 @@ function toggleCompleted(taskId) {
 	});
 };
 
+function displayListTasks(req, res, list) {
+	list.populate('tasks', function(err, populatedList) {
+		if (err) { 
+			console.log(err);
+			res.redirect('/lists/' + list.title);
+		} else {
+			res.render('list', {
+				today: moment(), 
+				list: populatedList, 
+				showCompleted: showCompleted
+			});
+		}
+	})
+};
+
 function displayDueBy(req, res, userId, dueDate) {
 	User.findOne({_id: userId}).populate('lists').exec(function(err, foundUser) {
 		if (err) { 
@@ -316,13 +390,42 @@ function displayDueBy(req, res, userId, dueDate) {
 								dueTasks.push(task);
 							}
 						})
-						res.render('smartlist', {today: moment(), dueTasks: dueTasks, dueDate: dueDate, showCompleted: showCompleted, completed: false});
+						res.render('list', {
+							today: moment(), 
+							list: {title: dueDate, tasks: dueTasks},
+							showCompleted: showCompleted
+						});
 					}
 				})
 			})
 		}
 	});
 }
+
+// function displayDueBy(req, res, userId, dueDate) {
+// 	User.findOne({_id: userId}).populate('lists').exec(function(err, foundUser) {
+// 		if (err) { 
+// 			console.log(err)
+// 		} else {
+// 			foundUser.lists.forEach(function(list) {
+// 				list.populate('tasks', function(err, populatedList) {
+// 					if (err) { 
+// 						console.log(err);
+// 						res.redirect('/lists/');
+// 					} else {
+// 						var dueTasks = [];
+// 						populatedList.tasks.forEach(function(task) {
+// 							if (moment().isSame(task.dueDate, 'day')) {
+// 								dueTasks.push(task);
+// 							}
+// 						})
+// 						res.render('smartlist', {today: moment(), dueTasks: dueTasks, dueDate: dueDate, showCompleted: showCompleted, completed: false});
+// 					}
+// 				})
+// 			})
+// 		}
+// 	});
+// }
 
 // DEFINE ROUTES
 
@@ -365,31 +468,22 @@ app.route('/lists/:listTitle')
 	.get(function (req, res) {
 		const listTitle = _.lowerCase(req.params.listTitle);
 		if (req.query.showCompleted) {
-				showCompleted = JSON.parse(req.query.showCompleted);
-			}
+			showCompleted = JSON.parse(req.query.showCompleted);
+		}
 
-		if (listTitle == 'today') {
-			requireAuthentication(req, res, function() {
+		requireAuthentication(req, res, function() {
+			if (listTitle == 'today') {
 				displayDueBy(req, res, req.user._id, listTitle);
-			});
-		} else{
-			requireAuthentication(req, res, function() {
+			} else {
 				findUsersListByTitle(listTitle, req.user._id, function() {
 					if (list) {
-						list.populate('tasks', function(err, populatedList) {
-							if (err) { 
-								console.log(err);
-								res.redirect('/lists/' + listTitle);
-							} else {
-								res.render('list', {today: moment(), tomorrow: moment().add(1, 'days'), list: populatedList, showCompleted: showCompleted});
-							}
-						})
+						displayListTasks(req, res, list);
 					} else {
 						res.redirect('/lists');
 					}
 				});
-			});
-		}
+			}
+		});
 	})
 	.delete(function(req, res) {
 		const listTitle = req.body.listTitle; // home
@@ -416,7 +510,8 @@ app.route('/lists/:listTitle/tasks')
 	.post(function(req, res) {
 		const listTitle = req.body.listTitle;
 		const taskName = req.body.newItem;
-		const dueDate = req.body.dueDate;
+		const dueDate = moment(req.body.dueDate, 'DD.MM.YYYY');
+
 		requireAuthentication(req, res, function() {
 			findUsersListByTitle(listTitle, req.user._id, function() {
 				if (list) {
@@ -453,18 +548,30 @@ app.route('/lists/:listTitle/tasks/:taskId')
 
 app.route('/login')
 	.get(function(req, res) {
-		res.render('login', {route: 'login'});
+		if (req.isAuthenticated()) {
+			res.redirect('/lists');
+		} else {
+			res.render('login', {route: 'login'});
+		}
 	})
 	.post(function(req, res) {
-		findAndAuthenticateUser(req.body.email, req.body.password, req, res);
+		findAndAuthenticateUser(req.body.email, req.body.password, req, res, function() {
+			res.redirect('/register');
+		});
 	});
 
 app.route('/register')
 	.get(function(req, res) {
-		res.render('login', {route: 'register'});
+		if (req.isAuthenticated()) {
+			res.redirect('/lists');
+		} else {
+			res.render('login', {route: 'register'});
+		}
 	})
 	.post(function(req, res) {
-		createUser(req.body.email, req.body.password, req, res);
+		findAndAuthenticateUser(req.body.email, req.body.password, req, res, function() {
+			createUser(req.body.email, req.body.password, req, res);
+		})
 	});
 
 app.get('/auth/google',
@@ -494,9 +601,13 @@ app.get('/logout', function(req, res) {
 app.get('/date', function(req, res) {
 
 	var now = moment();
-	console.log(now.toISOString());
-	console.log(now.toISOString(true));
-	console.log(now.format().slice(0, -9));
+
+	console.log(moment().toISOString())
+	if (now.isSame('2019-05-03', 'day')) {
+		console.log('task is due today');
+	} else {
+		console.log('task not due today')
+	}
 })
 
 // START SERVER 

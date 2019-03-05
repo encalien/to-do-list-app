@@ -1,0 +1,233 @@
+body {
+  background-color: #E4E9FD;
+  background-image: -webkit-linear-gradient(90deg, #A683E3 20%, #E4E9FD 80%);
+  font-family: 'helvetica neue';
+  height: 100vh;
+}
+
+h1, h2 {
+  color: #fff;
+  padding: 6px;
+  margin: 0 !important;
+}
+
+h4, p, a {
+  color: #00204a;
+  font-size: 1.2em;
+  font-weight: 300;
+  margin-bottom: 0;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  color: #A683E3;
+}
+
+a:focus {
+	outline: 1px dotted grey;
+	box-shadow: none;
+}
+
+hr {
+	margin: 10px auto;
+	width: 60px;
+	border-top: 4px dotted #c1c1c1;
+}
+
+
+
+
+
+
+
+.btn:focus {
+	outline: 1px dotted grey;
+	box-shadow: none;
+}
+
+.btn-add i {
+	color: #A683E3;
+}
+
+.btn-delete i {
+	width: 24px;
+	color: red;
+}
+
+.btn-circle {
+	border-radius: 100%;
+	padding: 0;
+	margin: 3px auto;
+	outline: 0 !important;
+
+}
+
+.btn-outline-purple {
+	color: #A683E3;
+	background-color: #fff;
+	border-color: #A683E3;
+	border-width: 2px;
+	border-radius: 5px;
+}
+
+.btn-outline-purple:hover {
+	color: #fff;
+	background-color: #A683E3;
+	border-color: #A683E3;
+}
+
+.btn-white {
+	color: #A683E3;
+	background-color: #fff;
+	border-color: #fff;
+	border-width: 2px;
+	border-radius: 5px;
+}
+
+.btn-white:hover {
+	color: #fff;
+	background-color: #A683E3;
+}
+
+.card {
+	margin-top: 20px;
+	border-radius: 5px;
+}
+
+.card-body {
+  background: #A683E3;
+  text-align: center;
+  height: 56px;
+  line-height: 36px;
+  padding: 10px;
+  border-top-right-radius: 5px;
+  border-top-left-radius: 5px;
+}
+
+.card-text {
+	vertical-align: middle;
+}
+
+.card-title {
+	padding-top: 10px;
+}
+
+.datepicker {
+	font-size: 0.8rem;
+	text-align: center;
+	padding: 4px 0 0;
+	border: none !important;
+}
+
+.gj-datepicker {
+	padding: 9px 0;
+}
+
+.gj-datepicker .btn {
+	border: none !important;
+}
+
+.help {
+  font-size: 1em;
+  text-align: center;
+}
+
+.list-group-item {
+	min-height: 56px;
+	line-height: 31px;
+}
+
+.list-group-item input[type="checkbox"] {
+  height: 16px;
+  width: 16px;
+}
+
+.list-group-item input[type="text"] {
+  font-size: 18px;
+  font-weight: 200;
+  text-align: center;
+  height: 50px;
+  margin: 3px;
+  width: 100%;
+  border: none;
+}
+
+
+
+
+
+#day-display {
+	position: absolute;
+	left: 10px;
+	bottom: 10px;
+}
+
+#heading {
+	padding: 0;
+	margin: 0;
+}
+
+#login {
+	height: 460px;
+	margin-top: 50px;
+}
+
+#login .card-body {
+	height: 150px;
+}
+
+#login .list-group-item {
+	padding: 20px;
+}
+
+#login i {
+	padding: 2px 2px;
+}
+
+#login input {
+	margin: 10px 0;
+}
+
+
+
+
+.no-padding {
+	padding: 0;
+}
+
+.position-top-left {
+  position: absolute;
+  top: 20px;
+  left: 10px;
+}
+
+.position-top-right {
+  position: absolute;
+  top: 20px;
+  right: 10px;
+}
+
+.position-bottom-left {
+  position: absolute;
+  bottom: 20px;
+  left: 10px;
+}
+
+.center {
+  margin: 20px auto;
+}
+
+.wrapper-center {
+	display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wrapper-vertical-align {
+	display: flex;
+  align-items: center;
+}
+
