@@ -14,26 +14,31 @@
         <div class="card-body">
           <h2 class="card-title" id="heading"><%= list.title.toUpperCase(); %></h2>
         </div>
-        <ul class="list-group list-group-flush">
+        
 
 <!-- Create new task -->
-          <li class="list-group-item item-new">
-						<form action="/lists/:listTitle/tasks" method="POST">
-							<div class="row">
-								<div class="col-md-6">
-									<input type="text" name="newItem" placeholder="new task" autocomplete="off" autofocus>
+				<% if (['today', 'this week', 'overdue'].indexOf(list.title) == -1) { %>
+					<ul class="list-group list-group-flush">
+						<li class="list-group-item item-new">
+							<form action="/lists/:listTitle/tasks" method="POST">
+								<div class="row">
+									<div class="col-md-6">
+										<input type="text" name="newItem" placeholder="new task" autocomplete="off" autofocus>
+									</div>
+									<div class="col-md-4">
+										<input class="datepicker" width="120" name="dueDate" placeholder="due by">
+									</div>
+									<input type="hidden" name="listTitle" value="<%= list.title %>">
+									<div class="col-md-2 no-padding wrapper-center">
+										<button class="btn btn-add btn-circle" type="submit"><i class="fas fa-plus-circle fa-3x add"></i></button>
+									</div>
 								</div>
-								<div class="col-md-4">
-									<input class="datepicker" width="120" name="dueDate" placeholder="due by">
-								</div>
-								<input type="hidden" name="listTitle" value="<%= list.title %>">
-								<div class="col-md-2 no-padding wrapper-center">
-									<button class="btn btn-add btn-circle" type="submit"><i class="fas fa-plus-circle fa-3x add"></i></button>
-								</div>
-							</div>
-						</form>
-          </li>
-        </ul>
+							</form>
+	          </li>
+	        </ul>
+				<% } %>
+
+          
       </div>
     </div>
 

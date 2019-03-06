@@ -398,7 +398,7 @@ app.route('/lists/:listTitle')
 		}
 
 		requireAuthentication(req, res, function() {
-			if (listTitle == 'today' || listTitle == 'this week' || listTitle == 'overdue') {
+			if (['today', 'this week', 'overdue'].indexOf(listTitle) > -1) {
 				displayDueBy(req, res, req.user._id, listTitle);
 			} else {
 				findUsersListByTitle(listTitle, req.user._id, function() {
